@@ -1,0 +1,60 @@
+# Daily health check on the stats refresh.
+#
+# This used to drive the actual cadence on a "7,37 * * * *" schedule.
+# It no longer does, because it did not work: GitHub's `schedule` event
+# was being *dropped* rather than delayed — no queued runs ever appeared
+# for the missing ticks, and roughly 2 of an expected 14 runs fired in a
+# 7-hour window. That is documented behaviour ("schedule can be delayed
+# during periods of high load"), not a misconfiguration, and there is no
+# setting that fixes it.
+#
+# A Cloudflare Worker cron trigger now drives the real 30-minute
+# schedule (see worker/README.md). Cloudflare fires punctually but will
+# not tell you when a run fails, so this workflow stays on a once-daily
+# schedule as the alerting canary: it calls the same endpoint, checks the
+# status code, and fails the run — which emails you — if it is not 200.
+#
+# The only thing that returns a non-200 is a misconfigured deployment
+# (no KV credentials visible in production). A platform being down
+# returns 200 with that platform listed in `carriedForward`, because
+# that is the system working, not failing.
+#
+# Requires two repository secrets:
+#   SITE_URL     https://your-domain
+#   CRON_SECRET  the same value set in the Vercel project's env vars
+name: Refresh stats
+
+on:
+  schedule:
+    # 04:23 UTC daily. Deliberately not on :00, :05, :30 or :35 — those
+    # are the busy minutes generally, and :05/:35 are when the
+    # Cloudflare worker fires. Two schedulers hitting the endpoint at
+    # once is harmless (both merge onto the same stored snapshot and the
+    # merge is monotonic, so nothing regresses) but there is no reason
+    # to arrange it on purpose.
+    #
+    # A daily cron is also far likelier to actually fire than a
+    # half-hourly one, which is the other half of why this cadence.
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: refresh-stats
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger refresh
+        run: |
+          code=$(curl -sS -o response.json -w '%{http_code}' \
+            --max-time 120 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/revalidate")
+          cat response.json
+          echo
+          if [ "$code" != "200" ]; then
+            echo "::error::refresh returned HTTP $code"
+            exit 1
+          fi

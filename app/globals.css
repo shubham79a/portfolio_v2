@@ -1,0 +1,383 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════
+   Theme tokens.
+
+   Both modes are the same warm neutral-brown family, inverted in
+   lightness, so switching feels like one brand rather than two sites.
+   Components never reference a hex — only these variables, surfaced to
+   Tailwind through the `@theme inline` block below.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Light — "Warm stone" */
+  --bg: #e4ded0;
+  --surface: #ede8dc;
+  --text: #221d16;
+  /* Spec value was #7C7364, which measures 3.49:1 on --bg and fails
+     WCAG AA for text below 24px. Darkened to the nearest tone in the
+     same family that passes: 4.76:1. */
+  --text-muted: #675e50;
+  --accent: #6b4a3a;
+  --border: #d3cbba;
+
+  /* Derived, so data visualisation has real values in both themes
+     rather than borrowing opacity. Mixed from the tokens above, never
+     hand-picked. */
+  --accent-soft: color-mix(in oklab, var(--accent) 26%, var(--bg));
+  --accent-mid: color-mix(in oklab, var(--accent) 60%, var(--bg));
+  --accent-wash: color-mix(in oklab, var(--accent) 12%, var(--bg));
+
+  /* ── Hero atmosphere ──────────────────────────────────────────
+     Deliberately separate from the --accent-* family above, because
+     those describe a *colour* while these describe *light*, and light
+     has to be brighter than the surface it falls on.
+
+     The hero backdrop used to paint its glows straight from
+     --accent-wash / -soft / -mid. In dark mode the accent (#c79b6e) is
+     lighter than the background, so that worked: the gradients read as
+     warmth pooling on a dark field. In light mode the accent (#6b4a3a)
+     is much *darker* than the background, so the identical code painted
+     shadows — measured at -12, -24 and -48 luminance points against the
+     page, which is why the field showed a grey smudge and the cursor
+     light trailed a stain.
+
+     The two themes cannot use the same treatment even with the sign
+     corrected. The light background sits at 73% luminance, leaving 27
+     points of headroom to pure white, so the strongest glow light mode
+     can physically produce is about 1.34:1 against the page; dark mode
+     reaches 3.5:1. A soft bloom is simply not available here.
+
+     So the light values below are not the dark ones with the sign
+     flipped — they are a much gentler lift, sized to what this ground
+     can actually carry. Measured against the page: +9.6, +4.6 and +3.5
+     luminance points after each layer's opacity, where the old code sat
+     at -11.5, -10.3 and -14.8. */
+  --glow-wash: color-mix(in oklab, #fffdf5 45%, var(--bg));
+  --glow-soft: color-mix(in oklab, #fffdf5 50%, var(--bg));
+  --glow-deep: color-mix(in oklab, #fff9ea 55%, var(--bg));
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  /* Dark — "Espresso mono" */
+  --bg: #1c1712;
+  --surface: #241d16;
+  --text: #f2ece0;
+  --text-muted: #9c8f7c;
+  --accent: #c79b6e;
+  --border: #33291e;
+
+  --accent-soft: color-mix(in oklab, var(--accent) 30%, var(--bg));
+  --accent-mid: color-mix(in oklab, var(--accent) 62%, var(--bg));
+  --accent-wash: color-mix(in oklab, var(--accent) 16%, var(--bg));
+
+  /* Unchanged from what the backdrop always painted here — dark mode was
+     never the broken half, so these alias the existing values exactly
+     rather than restating them. */
+  --glow-wash: var(--accent-wash);
+  --glow-soft: var(--accent-soft);
+  --glow-deep: var(--accent-mid);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  /* Utility names are readable aliases; the custom properties they point
+     at are the ones named in the spec. */
+  --color-canvas: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-mid: var(--accent-mid);
+  --color-accent-wash: var(--accent-wash);
+  --color-line: var(--border);
+
+  --font-display: var(--font-display), Georgia, serif;
+  --font-body: var(--font-body), system-ui, sans-serif;
+
+  /* Smallest step is 13px, not 11px: every tier here carries real
+     information (dates, ranks, contest counts), so none of it may drop
+     below a comfortable reading size. */
+  --text-2xs: 0.8125rem;
+  --text-2xs--line-height: 1.5;
+  --text-xs: 0.875rem;
+  --text-xs--line-height: 1.55;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.6;
+  --text-base: 1.125rem;
+  --text-base--line-height: 1.65;
+  --text-lg: 1.375rem;
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.625rem;
+  --text-xl--line-height: 1.35;
+  --text-xl--letter-spacing: -0.01em;
+  --text-2xl: 2.25rem;
+  --text-2xl--line-height: 1.2;
+  --text-2xl--letter-spacing: -0.018em;
+  --text-3xl: 3.25rem;
+  --text-3xl--line-height: 1.08;
+  --text-3xl--letter-spacing: -0.024em;
+  --text-4xl: 4.5rem;
+  --text-4xl--line-height: 1;
+  --text-4xl--letter-spacing: -0.03em;
+  --text-5xl: 6.5rem;
+  --text-5xl--line-height: 0.95;
+  --text-5xl--letter-spacing: -0.035em;
+
+  --spacing-rail: 11rem;
+  --spacing-gutter: 3rem;
+  --spacing-section: 8.5rem;
+}
+
+@layer base {
+  html {
+    /* Horizontal containment belongs on the viewport element, not body:
+       `overflow-x` on body does not reliably propagate, and pairing
+       `clip` with a `visible` cross-axis makes that axis compute to
+       `auto`. `clip` rather than `hidden` because `hidden` would turn
+       this into a scroll container and break the sticky section rails. */
+    overflow-x: clip;
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+    font-variation-settings: "SOFT" 22, "WONK" 1;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--bg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+  }
+}
+
+@layer components {
+  /* The one link treatment. The accent is intentionally muted, so
+     interactive elements are never marked by colour alone — the rule
+     underneath carries the affordance in both themes. */
+  .link-rule {
+    background-image: linear-gradient(
+      to right,
+      currentColor,
+      currentColor
+    );
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size 350ms var(--ease), color 250ms var(--ease);
+  }
+  .link-rule:hover,
+  .link-rule:focus-visible {
+    background-size: 100% 1px;
+    color: var(--accent);
+  }
+
+  /* The hero's vertical frame.
+
+     This lives here rather than in utility classes because it needs a
+     media query that is awkward to express as a stacked variant, and
+     because the reason for that query is worth writing down.
+
+     A phone with "Desktop site" enabled reports a layout viewport of
+     roughly 980px wide against the phone's *full* pixel height — often
+     2,000px or more. That is wide enough to clear every width
+     breakpoint, so the hero sized itself to a viewport more than twice
+     as tall as its own content and left most of a screen of dead space
+     above the portrait and below the copy.
+
+     Width alone cannot separate the two cases: a 390x844 phone and that
+     same phone in desktop mode have almost identical aspect ratios
+     (0.46 and 0.45). What is unique is the *combination* — a desktop
+     width together with an extreme portrait aspect. No real display is
+     shaped that way, so there the content decides the height and the
+     section padding does the rest.
+
+     3/5 is the threshold because it clears a portrait tablet (768x1024
+     is 0.75, which keeps its full-height hero) while catching desktop
+     mode on every phone shape. */
+  .hero-frame {
+    min-height: 92svh;
+  }
+
+  /* `48rem`, matching Tailwind's `md`, rather than `768px`. The hero's
+     padding switches at `md:pt-32`, and a media query written in `px`
+     only lines up with that while the browser's default font size is
+     16px — see the longer note on the skills tabs below. */
+  @media (min-width: 48rem) {
+    .hero-frame {
+      min-height: 100dvh;
+    }
+  }
+
+  @media (min-width: 48rem) and (max-aspect-ratio: 3/5) {
+    .hero-frame {
+      min-height: 0;
+    }
+  }
+
+  /* Persistent underline for links inside running text, where a
+     hover-only affordance would not be discoverable. */
+  .link-inline {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in oklab, var(--accent) 45%, transparent);
+    transition: text-decoration-color 250ms var(--ease);
+  }
+  .link-inline:hover,
+  .link-inline:focus-visible {
+    text-decoration-color: var(--accent);
+  }
+}
+
+/* ── Theme switch ─────────────────────────────────────────────
+   The switch is instant: flip `data-theme`, repaint once, done.
+
+   Two richer approaches were built and measured, and both were slower
+   in the way that actually matters — how long it takes before the page
+   settles:
+
+   1. Transitioning colours per element. A `transition` on every node so
+      colours ease between themes. On /stats that is several hundred
+      elements (the heatmap alone was ~370 rects with an animated
+      `fill`) and it was by far the worst: 13,552ms longest blocking
+      task at 4x CPU throttle.
+   2. A circular wipe via the View Transitions API. Much better than the
+      above, and it looked good — but the API must capture two
+      full-viewport snapshots and run a style recalc *before* the first
+      frame of the animation. On a long page that pre-roll is a visible
+      stall on click, which is exactly the lag this is meant to remove.
+
+   So: nothing animates. There is no colour transition on theme change
+   anywhere, and no snapshotting. The cost is one style recalc and one
+   repaint, which is the floor for changing a themed custom property.
+
+   Do not reintroduce a document-wide `transition` rule to smooth this.
+   It is the single most expensive thing that was ever in this file. */
+
+
+/* ── Entrance failsafe ─────────────────────────────────────────
+   Animated elements are server-rendered hidden, so a client bundle that
+   never executes would leave the page blank. A CSS animation is used
+   because animated values outrank inline styles in the cascade, which is
+   what it takes to override what Framer Motion wrote. It is disarmed the
+   moment React hydrates (components/hydration-flag.tsx). */
+@keyframes entrance-failsafe {
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+[data-entrance] {
+  animation: entrance-failsafe 1ms linear 4s forwards;
+}
+
+html[data-hydrated] [data-entrance] {
+  animation: none;
+}
+
+/* ── Skills categories as tabs, on small screens only ─────────
+   Below md the category chips behave as tabs: pick one, see only that
+   group. Two columns of tiles at phone width leaves about 90px for a
+   label, which is how "Docker" ended up breaking across two lines.
+
+   Done with radio inputs and :has() rather than React state on purpose.
+   The section is a server component, so every brand icon exists only as
+   HTML; making it interactive would serialise all 39 of them into the
+   client payload a second time, which is most of what removing the
+   marquee just saved.
+
+   The two rules are written so that a browser without :has() drops both
+   and simply shows every group — long, but never blank.
+
+   The breakpoint must be `48rem`, not `768px`, and the two are not
+   interchangeable. The chips are hidden by Tailwind's `md:hidden`, which
+   compiles to `(min-width: 48rem)`. `rem` in a media query resolves
+   against the *browser's default font size* — a user setting, not the
+   page's — so at the default 16px the two agree, and at any other
+   setting they drift apart. With a 20px default, `48rem` is 960px: the
+   chips stay on screen up to 960px while filtering stopped at 767px,
+   leaving a 193px-wide band where every group is visible and the chips
+   are inert. That is exactly how the same window width behaved
+   differently in three Chromium browsers.
+
+   `(width < 48rem)` is the exact complement of `(min-width: 48rem)`, so
+   there is no gap at any font size or at fractional widths. */
+@media (width < 48rem) {
+  [data-skills]:has([data-tab]:checked) [data-group] {
+    display: none;
+  }
+  [data-skills]:has([data-tab="0"]:checked) [data-group="0"],
+  [data-skills]:has([data-tab="1"]:checked) [data-group="1"],
+  [data-skills]:has([data-tab="2"]:checked) [data-group="2"],
+  [data-skills]:has([data-tab="3"]:checked) [data-group="3"],
+  [data-skills]:has([data-tab="4"]:checked) [data-group="4"],
+  [data-skills]:has([data-tab="5"]:checked) [data-group="5"] {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Reduced motion is resolved in CSS, not JavaScript: the server
+     renders every animated element hidden because it cannot know the
+     visitor's preference, so a client-side check would run too late to
+     clear those inline styles. */
+  [data-entrance] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    stroke-dasharray: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}

@@ -1,0 +1,19 @@
+# Reference copy of the deployed worker's configuration.
+#
+# The live worker is managed from the Cloudflare dashboard; nothing in
+# CI runs `wrangler deploy`. This file exists so the schedule and entry
+# point are readable from the repo rather than only from a web editor.
+#
+# Secrets are deliberately absent. SITE_URL and CRON_SECRET are set in
+# the dashboard under Settings -> Variables and Secrets, with
+# CRON_SECRET stored as an encrypted secret.
+
+name = "portfolio-stats-refresh"
+main = "refresh.js"
+compatibility_date = "2026-09-06"
+
+[triggers]
+# Every 30 minutes at :05 and :35. Offset off :00/:30 for the same
+# reason the old GitHub cron was offset: those are the two minutes every
+# other cron on the platform also fires.
+crons = ["5,35 * * * *"]
