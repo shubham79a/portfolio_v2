@@ -24,11 +24,15 @@ export const site = {
    * Person schema and the OG card footer, so it must be the domain this
    * deployment actually answers on.
    *
-   * CHANGE THIS BEFORE DEPLOYING. It is a placeholder for the v2 Vercel
-   * domain. Pointing it at another site makes every canonical tag on
-   * these pages claim that site is the original.
+   * Deliberately not the auto-generated `portfoliov2-ten-eta.vercel.app`:
+   * that name is regenerated if the project is ever recreated, and a
+   * canonical URL that can change out from under the site is worse than
+   * no canonical URL. The plain `shubham-kumar.vercel.app` was already
+   * held by an unrelated person of the same name — which is the whole
+   * reason this field matters. Pointing it at someone else's domain
+   * would have had these pages declare that site the original.
    */
-  url: "https://shubham-kumar.vercel.app",
+  url: "https://shubham-kumar79.vercel.app",
   resume: "/resume.pdf",
 } as const;
 

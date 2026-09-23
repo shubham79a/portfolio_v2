@@ -326,7 +326,7 @@ npx tsc --noEmit && npm run lint
 
 # 3. Trigger a refresh by hand and read the report
 curl -H "Authorization: Bearer $CRON_SECRET" \
-     https://shubham-kumar.vercel.app/api/revalidate
+     https://shubham-kumar79.vercel.app/api/revalidate
 ```
 
 A healthy response looks like:

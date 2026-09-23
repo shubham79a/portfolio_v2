@@ -35,11 +35,21 @@ interface Upstash {
   token: string;
 }
 
+/**
+ * `||`, not `??`. The two spellings exist so that either Vercel's or
+ * Upstash's own naming works, and `??` broke that: it falls through only
+ * on undefined, so a `KV_REST_API_URL` present but set to the empty
+ * string — which is exactly what happens when .env.example's blank
+ * placeholders get pasted into a hosting dashboard — silently *shadowed*
+ * a correctly populated `UPSTASH_REDIS_REST_URL`. The store then reported
+ * "memory" while the dashboard showed every variable set, which is the
+ * most expensive kind of wrong. An empty credential is not a credential.
+ */
 function upstash(): Upstash | null {
   const url =
-    process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL ?? "";
+    process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "";
   const token =
-    process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN ?? "";
+    process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "";
   if (!url || !token) return null;
   return { url: url.replace(/\/+$/, ""), token };
 }

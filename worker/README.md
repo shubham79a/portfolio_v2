@@ -18,7 +18,7 @@ Cloudflare holds the running copy and the secrets.
 | --- | --- |
 | Worker name | `portfolio-stats-refresh` |
 | Cron trigger | `5,35 * * * *` — every 30 min, offset off the top of the hour |
-| Variable `SITE_URL` | `https://shubham-kumar.vercel.app` (plain text) |
+| Variable `SITE_URL` | `https://shubham-kumar79.vercel.app` (plain text) |
 | Variable `CRON_SECRET` | same value as Vercel's Production `CRON_SECRET` (**secret**) |
 
 `wrangler.toml` mirrors this so the config is readable here too. It is
